@@ -426,6 +426,22 @@
           "buildMultiTargeting/MudBlazor.props": {}
         }
       },
+      "System.Composition.Runtime/7.0.0": {
+        "type": "package",
+        "compile": {
+          "lib/net6.0/System.Composition.Runtime.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net6.0/System.Composition.Runtime.dll": {
+            "related": ".xml"
+          }
+        },
+        "build": {
+          "buildTransitive/net6.0/_._": {}
+        }
+      },
       "System.Diagnostics.DiagnosticSource/6.0.0": {
         "type": "package",
         "dependencies": {
@@ -946,6 +962,22 @@
         },
         "buildMultiTargeting": {
           "buildMultiTargeting/MudBlazor.props": {}
+        }
+      },
+      "System.Composition.Runtime/7.0.0": {
+        "type": "package",
+        "compile": {
+          "lib/net6.0/System.Composition.Runtime.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net6.0/System.Composition.Runtime.dll": {
+            "related": ".xml"
+          }
+        },
+        "build": {
+          "buildTransitive/net6.0/_._": {}
         }
       },
       "System.Diagnostics.DiagnosticSource/6.0.0": {
@@ -1667,6 +1699,33 @@
         "staticwebassets/MudBlazor.min.js.gz"
       ]
     },
+    "System.Composition.Runtime/7.0.0": {
+      "sha512": "aZJ1Zr5Txe925rbo4742XifEyW0MIni1eiUebmcrP3HwLXZ3IbXUj4MFMUH/RmnJOAQiS401leg/2Sz1MkApDw==",
+      "type": "package",
+      "path": "system.composition.runtime/7.0.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "Icon.png",
+        "LICENSE.TXT",
+        "THIRD-PARTY-NOTICES.TXT",
+        "buildTransitive/net461/System.Composition.Runtime.targets",
+        "buildTransitive/net462/_._",
+        "buildTransitive/net6.0/_._",
+        "buildTransitive/netcoreapp2.0/System.Composition.Runtime.targets",
+        "lib/net462/System.Composition.Runtime.dll",
+        "lib/net462/System.Composition.Runtime.xml",
+        "lib/net6.0/System.Composition.Runtime.dll",
+        "lib/net6.0/System.Composition.Runtime.xml",
+        "lib/net7.0/System.Composition.Runtime.dll",
+        "lib/net7.0/System.Composition.Runtime.xml",
+        "lib/netstandard2.0/System.Composition.Runtime.dll",
+        "lib/netstandard2.0/System.Composition.Runtime.xml",
+        "system.composition.runtime.7.0.0.nupkg.sha512",
+        "system.composition.runtime.nuspec",
+        "useSharedDesignerContext.txt"
+      ]
+    },
     "System.Diagnostics.DiagnosticSource/6.0.0": {
       "sha512": "frQDfv0rl209cKm1lnwTgFPzNigy2EKk1BS3uAvHvlBVKe5cymGyHO+Sj+NLv5VF/AhHsqPIUUwya5oV4CHMUw==",
       "type": "package",
@@ -1828,28 +1887,24 @@
     "net6.0": [
       "Microsoft.AspNetCore.Components.WebAssembly >= 6.0.7",
       "Microsoft.AspNetCore.Components.WebAssembly.DevServer >= 6.0.7",
-      "MudBlazor >= 6.0.13"
+      "MudBlazor >= 6.0.13",
+      "System.Composition.Runtime >= 7.0.0"
     ]
   },
   "packageFolders": {
-    "C:\\Users\\SID\\.nuget\\packages\\": {},
-    "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
+    "C:\\Users\\Administrator\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\SID\\source\\repos\\TestMudBlazorApp\\TestMudBlazorApplication.csproj",
+      "projectUniqueName": "C:\\Users\\Administrator\\Documents\\GitHub\\TestMudBlazorApp\\TestMudBlazorApplication.csproj",
       "projectName": "TestMudBlazorApplication",
-      "projectPath": "C:\\Users\\SID\\source\\repos\\TestMudBlazorApp\\TestMudBlazorApplication.csproj",
-      "packagesPath": "C:\\Users\\SID\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\SID\\source\\repos\\TestMudBlazorApp\\obj\\",
+      "projectPath": "C:\\Users\\Administrator\\Documents\\GitHub\\TestMudBlazorApp\\TestMudBlazorApplication.csproj",
+      "packagesPath": "C:\\Users\\Administrator\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\Administrator\\Documents\\GitHub\\TestMudBlazorApp\\obj\\",
       "projectStyle": "PackageReference",
-      "fallbackFolders": [
-        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-      ],
       "configFilePaths": [
-        "C:\\Users\\SID\\AppData\\Roaming\\NuGet\\NuGet.Config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+        "C:\\Users\\Administrator\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
@@ -1857,16 +1912,7 @@
       ],
       "sources": {
         "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-        "C:\\Program Files\\dotnet\\library-packs": {},
-        "https://api.nuget.org/v3/index.json": {},
-        "https://seas-nve.myget.org/F/integration/auth/04ca6d91-5ce7-4590-99d3-36760e58aa88/api/v3/index.json": {},
-        "https://seas-nve.myget.org/F/integration/auth/5d4b53db-1ff4-42a4-86fc-dd5ee32d1345/api/v2/": {},
-        "https://seas-nve.myget.org/F/integration/auth/79eadea2-4633-4aed-889d-fb399348867e/api/v2": {},
-        "https://seas-nve.pkgs.visualstudio.com/_packaging/Market.Core/nuget/v2": {},
-        "https://seas-nve.pkgs.visualstudio.com/_packaging/Market.Core/nuget/v3/index.json": {},
-        "https://seas-nve.pkgs.visualstudio.com/_packaging/Market.Crm/nuget/v3/index.json": {},
-        "https://seas-nve.pkgs.visualstudio.com/_packaging/Market.Integration/nuget/v3/index.json": {},
-        "https://seas-nve.pkgs.visualstudio.com/_packaging/Market/nuget/v3/index.json": {}
+        "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
         "net6.0": {
@@ -1896,6 +1942,10 @@
           "MudBlazor": {
             "target": "Package",
             "version": "[6.0.13, )"
+          },
+          "System.Composition.Runtime": {
+            "target": "Package",
+            "version": "[7.0.0, )"
           }
         },
         "imports": [

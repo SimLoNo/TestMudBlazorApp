@@ -4,7 +4,7 @@
 	{
 		public int AttachmentId { get; set; }
 		public int CardId { get; set; }
-		public string Name { get; set; }
+		public string AttachmentName { get; set; }
 		public string AttachmentFile { get; set; }
 
 	}

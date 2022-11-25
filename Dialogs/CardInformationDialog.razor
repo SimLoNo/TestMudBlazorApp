@@ -1,0 +1,52 @@
+﻿@using TestMudBlazorApplication.Models;
+
+@inject HttpClient _http
+
+<MudDialog>
+    <DialogContent>
+        <MudTextField @bind-Value="_newCard.Title" Placeholder="Title" DisableUnderLine="true" Margin="Margin.Dense" Class="mx-2 mt-n2"></MudTextField>
+		<MudTextField @bind-Value="_newCard.CardDescription" Placeholder="Description" DisableUnderLine="true" Margin="Margin.Dense" Class="mx-2 mt-n2"></MudTextField>
+		<MudTextField @bind-Value="_newCard.CardStatus" Disabled="true" DisableUnderLine="true" Margin="Margin.Dense" Class="mx-2 mt-n2"></MudTextField>
+        <MudSelect @ref="_dropdown" Placeholder="Assign user" @bind-Value="_newCard.AssignedUser">
+			@foreach (var item in _users)
+			{
+				<MudSelectItem Value="@item">@item.Initials</MudSelectItem>
+            }
+        </MudSelect>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">Ok</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+    [Parameter] public string StatusName { get; set; }
+
+    private MudSelect<User> _dropdown;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _newCard.CardStatus = StatusName;
+        _users = await _http.GetFromJsonAsync<List<User>>("http://localhost:5213/api/User");
+    }
+
+    public Card _newCard { get; set; }
+    public List<User> _users { get; set; }
+
+    async void Submit()
+    {
+        if (_newCard.CardId != null)
+        {
+
+        }
+        else
+        {
+            HttpResponseMessage responseMessage = await _http.PostAsJsonAsync($"http://localhost:5213/api/Card", _newCard);
+        }
+        MudDialog.Close(DialogResult.Ok(_newCard));
+    }
+    void Cancel() => MudDialog.Cancel();
+}
+

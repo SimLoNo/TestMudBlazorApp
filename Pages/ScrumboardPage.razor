@@ -1,13 +1,20 @@
 ﻿@using Microsoft.AspNetCore.Components
 @using System.ComponentModel.DataAnnotations
+@using TestMudBlazorApplication.Dialogs;
 @using TestMudBlazorApplication.Models;
+@*
+@using TestMudBlazorApplication.Services;
+@inject ICardService CardService;*@
+@inject IDialogService DialogService
+
+@inject HttpClient _http
 
 <h3>ScrumboardPage</h3>
 
 
 
 @page "/page"
-<MudDropContainer T="Card" @ref="_dropContainer" Items="@_tasks" ItemsSelector="@((item,column) => item.Status == column)" ItemDropped="TaskUpdated" Class="d-flex flex-row">
+<MudDropContainer T="Card" @ref="_dropContainer" Items="@_tasks" ItemsSelector="@((item,column) => item.CardStatus == column)" ItemDropped="TaskUpdated" Class="d-flex flex-row">
 	<ChildContent>
 		@foreach (var item in _sections)
 		{
@@ -59,7 +66,7 @@
 <MudMessageBox @ref="AddCardMessageBox">
 	<MessageContent>
 		<MudTextField @bind-Value="_newCard.Title" Placeholder="Title" DisableUnderLine="true" Margin="Margin.Dense" Class="mx-2 mt-n2"></MudTextField>
-		<MudTextField @bind-Value="_newCard.Description" Placeholder="Description" DisableUnderLine="true" Margin="Margin.Dense" Class="mx-2 mt-n2"></MudTextField>
+		<MudTextField @bind-Value="_newCard.CardDescription" Placeholder="Description" DisableUnderLine="true" Margin="Margin.Dense" Class="mx-2 mt-n2"></MudTextField>
 		<MudSelect Placeholder="Assign user" @bind-Value="_newCard.AssignedUser">
 			@foreach (var item in _users)
 			{
@@ -68,10 +75,10 @@
 		</MudSelect>
 	</MessageContent>
 	<YesButton>
-
+		<MudButton Variant="Variant.Filled" Color="Color.Error">Add</MudButton>
 	</YesButton>
 	<NoButton>
-
+		<MudButton Variant="Variant.Filled" Color="Color.Error">Cancel</MudButton>
 	</NoButton>
 	<CancelButton>
 
@@ -79,6 +86,17 @@
 </MudMessageBox>
 
 @code {
+	protected override async Task OnInitializedAsync()
+	{
+		List<Card> tempCards = await _http.GetFromJsonAsync<List<Card>>("http://localhost:5213/api/Card"); //await CardService.GetAllCards();
+		foreach (var item in tempCards)
+		{
+			_tasks.Add(item);
+		}
+		_users = await _http.GetFromJsonAsync<List<User>>("http://localhost:5213/api/User");
+		_dropContainer.Refresh();
+		Console.WriteLine("Refreshed _dropContainer");
+	}
 	private MudDropContainer<Card> _dropContainer;
 
 	private bool _addSectionOpen;
@@ -86,9 +104,11 @@
 	private List<User> _users = new();
 	private Card _newCard = new();
 	/* handling board events */
-	private void TaskUpdated(MudItemDropInfo<Card> info)
+	private async void TaskUpdated(MudItemDropInfo<Card> info)
 	{
-		info.Item.Status = info.DropzoneIdentifier;
+		info.Item.CardStatus = info.DropzoneIdentifier;
+		await _http.PutAsJsonAsync<Card>($"http://localhost:5213/api/Card/{info.Item.CardId}", info.Item);
+
 	}
 
 	/* Setup for board  */
@@ -113,10 +133,7 @@
 		}
 	}
 
-	private List<Card> _tasks = new()
-	{
-		new Card(){CardId=1,Title="Make Card",Status="To Do",}
-	};
+	private List<Card> _tasks = new();
 
 	KanBanNewForm newSectionModel = new KanBanNewForm();
 
@@ -141,16 +158,72 @@
 
 	private async void AddTask(KanBanSections section)
 	{
-		bool? result = await AddCardMessageBox.Show();
-		_tasks.Add(new Card()
+		var parameters = new DialogParameters();
+		parameters.Add("StatusName", section.Name);
+
+		var dialog = DialogService.Show<CardInformationDialog>("Add table", parameters);
+		var result = await dialog.Result;
+		var newCard = result.Data;
+		if (newCard is not null)
+		{
+			Card card1;
+			try
 			{
-				CardId = 2,
-				Title = section.NewTaskName,
-				Status = section.Name
-			});
-		section.NewTaskName = string.Empty;
+				card1 = (Card)newCard;
+				_tasks.Add(card1);
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine(ex.Message);
+			}
+
+		}
+
+		//bool? result = await AddCardMessageBox.Show();
+		//if (result == true)
+		//{
+		//	Card card = new()
+		//		{
+		//			UserId = _newCard.AssignedUser.UserId,
+		//			Title = _newCard.Title,
+		//			CardStatus = section.Name,
+		//			CardDescription = _newCard.CardDescription,
+		//		};
+		//	HttpResponseMessage responseMessage = await _http.PostAsJsonAsync($"http://localhost:5213/api/Card", card);
+		//	if (responseMessage.IsSuccessStatusCode == true)
+		//	{
+		//		_tasks.Add(card);
+		//	}
+		//}
+		//else
+		//{
+		//	_newCard.AssignedUser = null;
+		//	_newCard.Attachment = null;
+		//	_newCard.Title = null;
+		//	_newCard.CardStatus = null;
+		//	_newCard.CardDescription = null;
+		//}
+		
+		//
+		//_tasks.Add(new Card()
+			//{
+			//	CardId = 2,
+			//	Title = section.NewTaskName,
+			//	CardStatus = section.Name,
+			//	CardDescription = section.Name
+			//});
 		section.NewTaskOpen = false;
 		_dropContainer.Refresh();
+	}
+	private async void DeleteTask(Card card)
+	{
+		HttpResponseMessage responseMessage = await _http.DeleteAsync($"http://localhost:5213/api/Card/{card.CardId}");
+		if (responseMessage.IsSuccessStatusCode == true)
+		{
+			_tasks.Remove(card);
+			_dropContainer.Refresh();
+		}
+
 	}
 
 	private void DeleteSection(KanBanSections section)
@@ -170,10 +243,10 @@
 
 			_sections.Remove(section);
 
-			var tasks = _tasks.Where(x => x.Status == section.Name);
+			var tasks = _tasks.Where(x => x.CardStatus == section.Name);
 			foreach (var item in tasks)
 			{
-				item.Status = _sections[newIndex].Name;
+				item.CardStatus = _sections[newIndex].Name;
 			}
 		}
 	}
