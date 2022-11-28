@@ -164,7 +164,7 @@
 		var dialog = DialogService.Show<CardInformationDialog>("Add table", parameters);
 		var result = await dialog.Result;
 		var newCard = result.Data;
-		if (newCard is not null)
+		if (newCard is not null && !result.Cancelled)
 		{
 			Card card1;
 			try
