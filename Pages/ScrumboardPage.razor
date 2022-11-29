@@ -20,25 +20,15 @@
 		{
 			<MudPaper Elevation="0" Width="224px" MinHeight="400px" Class="pa-4 ma-4 d-flex flex-column mud-background-gray rounded-lg">
 				<MudToolBar DisableGutters="true">
-					<MudText Typo="Typo.subtitle1"><b>@item.Name</b></MudText>
+					<MudText Typo="Typo.subtitle1"><b>@item.ColumnName</b></MudText>
 					<MudSpacer />
 					<MudMenu Icon="@Icons.Material.Rounded.MoreHoriz" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" ListClass="pa-2 d-flex flex-column" PopoverClass="mud-elevation-25">
 						<MudButton Size="Size.Small" Color="Color.Error" StartIcon="@Icons.Outlined.Delete" OnClick="@( () => DeleteSection(item))">Delete Section</MudButton>
 						<MudButton Size="Size.Small" Color="Color.Default" StartIcon="@Icons.Rounded.Edit">Rename Section</MudButton>
 					</MudMenu>
 				</MudToolBar>
-				<MudDropZone T="Card" Identifier="@item.Name" Class="mud-height-full" />
-				@if (item.NewTaskOpen)
-				{
-					<MudPaper Elevation="25" Class="pa-2 rounded-lg">
-						@*<MudTextField @bind-Value="item.NewTaskName" Placeholder="New Task" DisableUnderLine="true" Margin="Margin.Dense" Class="mx-2 mt-n2"></MudTextField>*@
-						<MudButton OnClick="@(() => AddTask(item))" Size="Size.Small" Color="Color.Primary" FullWidth="true">Add Task</MudButton>
-				</MudPaper>
-			}
-			else
-			{
-					<MudButton OnClick="@(() => {item.NewTaskOpen = !item.NewTaskOpen; AddTask(item);})" StartIcon="@Icons.Filled.Add" FullWidth="true" Class="rounded-lg py-2">Add Task</MudButton>
-			}
+				<MudDropZone T="Card" Identifier="@item.ColumnName" Class="mud-height-full" />
+				<MudButton OnClick="@(() => {item.NewTaskOpen = !item.NewTaskOpen; AddTask(item);})" StartIcon="@Icons.Filled.Add" FullWidth="true" Class="rounded-lg py-2">Add Task</MudButton>
 			</MudPaper>
 		}
 		<MudPaper Class="pa-4" Elevation="0" Width="224px">
@@ -59,7 +49,9 @@
 		</MudPaper>
 	</ChildContent>
 	<ItemRenderer>
-		<MudPaper Elevation="25" Class="pa-4 rounded-lg my-3">@context.Title</MudPaper>
+		<MudButton OnClick="@(() => {UpdateTask(context);})">
+			<MudPaper Elevation="25" Class="pa-4 rounded-lg my-3">@context.Title</MudPaper>
+		</MudButton>
 	</ItemRenderer>
 </MudDropContainer>
 
@@ -88,6 +80,19 @@
 @code {
 	protected override async Task OnInitializedAsync()
 	{
+		_sections = await _http.GetFromJsonAsync<List<Column>>("http://localhost:5213/api/Column"); //List<Column> tempColumn
+																									//foreach (var item in tempColumn)
+																									//{
+																									//	Console.WriteLine("tempColumn id: " + item.ColumnId);
+																									//	Console.WriteLine("tempColumn name: " + item.ColumnName);
+																									//	_sections.Add(new Column(item.ColumnId, item.ColumnName, false));
+																									//}
+		foreach (var item in _sections)
+		{
+			Console.WriteLine("_section id: " + item.ColumnId);
+			Console.WriteLine("_section name: " + item.ColumnName);
+		}
+
 		List<Card> tempCards = await _http.GetFromJsonAsync<List<Card>>("http://localhost:5213/api/Card"); //await CardService.GetAllCards();
 		foreach (var item in tempCards)
 		{
@@ -112,12 +117,9 @@
 	}
 
 	/* Setup for board  */
-	private List<KanBanSections> _sections = new()
-		{
-			new KanBanSections("To Do", false, String.Empty),
-			new KanBanSections("In Process", false, String.Empty),
-			new KanBanSections("Done", false, String.Empty),
-		};
+	private List<Column> _sections = new()
+	{
+	};
 
 	public class KanBanSections
 	{
@@ -146,7 +148,7 @@
 
 	private void OnValidSectionSubmit(EditContext context)
 	{
-		_sections.Add(new KanBanSections(newSectionModel.Name, false, String.Empty));
+		_sections.Add(new Column(0, newSectionModel.Name, false));
 		newSectionModel.Name = string.Empty;
 		_addSectionOpen = false;
 	}
@@ -156,14 +158,49 @@
 		_addSectionOpen = true;
 	}
 
-	private async void AddTask(KanBanSections section)
+	private async void UpdateTask(Card card)
 	{
 		var parameters = new DialogParameters();
-		parameters.Add("StatusName", section.Name);
+		parameters.Add("StatusName", card.CardStatus);
+		parameters.Add("Columns", _sections);
+		parameters.Add("oldCard", card);
+		parameters.Add("_users", _users);
+
+		var dialog = DialogService.Show<CardInformationDialog>("edit card", parameters);
+		var result = await dialog.Result;
+		var newCard = result.Data;
+		Console.WriteLine("result.Cancelled: " + result.Cancelled);
+		if (newCard is not null && !result.Cancelled)
+		{
+			Card card1;
+			try
+			{
+
+				card1 = (Card)newCard;
+				int taskId = _tasks.FindIndex(t => t.CardId == card.CardId);
+				_tasks[taskId] = card1;
+				_dropContainer.Refresh();
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine(ex.Message);
+			}
+
+		}
+	}
+
+	private async void AddTask(Column section)
+	{
+		var parameters = new DialogParameters();
+		parameters.Add("StatusName", section.ColumnName);
+		parameters.Add("Columns", _sections);
+		parameters.Add("oldCard", null);
+		parameters.Add("_users", _users);
 
 		var dialog = DialogService.Show<CardInformationDialog>("Add table", parameters);
 		var result = await dialog.Result;
 		var newCard = result.Data;
+		section.NewTaskOpen = false;
 		if (newCard is not null && !result.Cancelled)
 		{
 			Card card1;
@@ -226,7 +263,7 @@
 
 	}
 
-	private void DeleteSection(KanBanSections section)
+	private void DeleteSection(Column section)
 	{
 		if (_sections.Count == 1)
 		{
@@ -243,10 +280,10 @@
 
 			_sections.Remove(section);
 
-			var tasks = _tasks.Where(x => x.CardStatus == section.Name);
+			var tasks = _tasks.Where(x => x.CardStatus == section.ColumnName);
 			foreach (var item in tasks)
 			{
-				item.CardStatus = _sections[newIndex].Name;
+				item.CardStatus = _sections[newIndex].ColumnName;
 			}
 		}
 	}

@@ -4,10 +4,16 @@
 
 <MudDialog>
     <DialogContent>
-        <MudTextField @bind-Value="_newCard.Title" Placeholder="Title" DisableUnderLine="true" Margin="Margin.Dense" Class="mx-2 mt-n2"></MudTextField>
-		<MudTextField @bind-Value="_newCard.CardDescription" Placeholder="Description" DisableUnderLine="true" Margin="Margin.Dense" Class="mx-2 mt-n2"></MudTextField>
-		<MudTextField @bind-Value="_newCard.CardStatus" Disabled="true" DisableUnderLine="true" Margin="Margin.Dense" Class="mx-2 mt-n2"></MudTextField>
-        <MudSelect @ref="_dropdown" Placeholder="Assign user" @bind-Value="_newCard.UserId">
+        <MudTextField HelperText="Title" @bind-Value="_newCard.Title" Placeholder="Title" DisableUnderLine="true" Margin="Margin.Dense" Class="mx-2 mt-n2"></MudTextField>
+		<MudTextField HelperText="Description" @bind-Value="_newCard.CardDescription" Placeholder="Description" DisableUnderLine="true" Margin="Margin.Dense" Class="mx-2 mt-n2"></MudTextField>
+		@*<MudTextField @bind-Value="_newCard.CardStatus" Disabled="true" DisableUnderLine="true" Margin="Margin.Dense" Class="mx-2 mt-n2"></MudTextField>*@
+        <MudSelect HelperText="Card status" @ref="_cardDropdown" Placeholder="Card status" @bind-Value="_newCard.CardStatus">
+			@foreach (var item in Columns)
+			{
+				<MudSelectItem Value="@item.ColumnName">@item.ColumnName</MudSelectItem>
+            }
+        </MudSelect>
+        <MudSelect HelperText="Assigned user" @ref="_userDropdown" Placeholder="Assign user" @bind-Value="_newCard.UserId">
 			@foreach (var item in _users)
 			{
 				<MudSelectItem Value="@item.UserId">@item.Initials</MudSelectItem>
@@ -23,24 +29,50 @@
 @code {
     [CascadingParameter] MudDialogInstance MudDialog { get; set; }
     [Parameter] public string StatusName { get; set; }
+    [Parameter] public List<Column> Columns { get; set; }
+    [Parameter] public Card ?oldCard { get; set; }
+    [Parameter] public List<User> _users { get; set; }
 
-    private MudSelect<User> _dropdown;
+    private MudSelect<int> _userDropdown;
+    private MudSelect<string> _cardDropdown;
 
     protected override async Task OnInitializedAsync()
     {
+        if (oldCard is not null)
+        {
+            _newCard.CardId = oldCard.CardId;
+            _newCard.UserId = oldCard.UserId;
+            _newCard.Title = oldCard.Title;
+            _newCard.CardDescription = oldCard.CardDescription;
+            _newCard.AssignedUser = oldCard.AssignedUser;
+            _newCard.Attachment = oldCard.Attachment;
+        }
         _newCard.CardStatus = StatusName;
-        _users = await _http.GetFromJsonAsync<List<User>>("http://localhost:5213/api/User");
+
+        //_users = await _http.GetFromJsonAsync<List<User>>("http://localhost:5213/api/User");
     }
 
-    public Card _newCard { get; set; } = new Card();
-    public List<User> _users { get; set; } = new();
+    private Card _newCard { get; set; } = new Card();
+    //public List<User> _users { get; set; } = new();
 
     async void Submit()
     {
         Console.WriteLine("CardId: " + _newCard.CardId);
         if (_newCard.CardId > 0)
         {
-            Console.WriteLine("Why is it in here?");
+            Console.WriteLine("Updating existing card");
+            HttpResponseMessage responseMessage = await _http.PutAsJsonAsync($"http://localhost:5213/api/Card/{_newCard.CardId}", _newCard);
+            if (responseMessage.IsSuccessStatusCode)
+            {
+
+                Console.WriteLine("Card Updated successfully");
+                MudDialog.Close(DialogResult.Ok(_newCard));
+            }
+            else
+            {
+
+                Console.WriteLine("Card not added: " + responseMessage.StatusCode.ToString());
+            }
         }
         else
         {
@@ -60,6 +92,11 @@
         }
         MudDialog.Close(DialogResult.Cancel());
     }
-    void Cancel() => MudDialog.Cancel();
+    void Cancel()
+    {
+        Console.WriteLine("Changes should be cancelled.");
+        _newCard = oldCard;
+        MudDialog.Close(DialogResult.Cancel());   //MudDialog.Cancel();
+    }
 }
 
