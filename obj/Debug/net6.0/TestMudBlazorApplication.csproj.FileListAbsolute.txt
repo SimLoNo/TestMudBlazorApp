@@ -1645,3 +1645,7 @@ C:\Users\Administrator\Documents\GitHub\TestMudBlazorApp\bin\Debug\net6.0\wwwroo
 C:\Users\Administrator\Documents\GitHub\TestMudBlazorApp\bin\Debug\net6.0\ApiKeyFile.json
 C:\Users\Administrator\Documents\GitHub\TestMudBlazorApp\bin\Debug\net6.0\System.Composition.Runtime.dll
 C:\Users\Administrator\Documents\GitHub\TestMudBlazorApp\obj\Debug\net6.0\build-gz\mVxB4ymR.gz
+C:\Users\Administrator\Documents\GitHub\TestMudBlazorApp\bin\Debug\net6.0\wwwroot\service-worker.js
+C:\Users\Administrator\Documents\GitHub\TestMudBlazorApp\bin\Debug\net6.0\wwwroot\service-worker-assets.js
+C:\Users\Administrator\Documents\GitHub\TestMudBlazorApp\obj\Debug\net6.0\service-worker\service-worker.js
+C:\Users\Administrator\Documents\GitHub\TestMudBlazorApp\obj\Debug\net6.0\service-worker-assets.js.build
