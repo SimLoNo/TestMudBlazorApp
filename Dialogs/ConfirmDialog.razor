@@ -1,0 +1,67 @@
+﻿
+@using TestMudBlazorApplication.Models;
+
+@inject HttpClient _http
+
+<MudDialog>
+    <DialogContent>
+        <MudText>@Description</MudText>
+        <MudText Color="Color.Error">@ErrorText</MudText>
+        
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">@ConfirmText</MudButton>
+    </DialogActions>
+</MudDialog>
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+    [Parameter] public string Description { get; set; }
+    [Parameter] public string ConfirmText { get; set; }
+    [Parameter] public Card ?SentCard { get; set; } // If the user deletes a card, it is sent here, if not it is null.
+    [Parameter] public Column ?SentColumn { get; set; } // If the user deletes a colum, it is sent here, if not it is null.
+
+    private string ?ErrorText { get; set; }
+
+    private async void Submit()
+    {
+        int ?deleteId = null; // a varible to contain the id of the card/column to be deleted
+        string endpoint = ""; // a variable to contain the endpoint of the API
+        string baseUrl = "http://10.108.130.43:5213/api"; // I have been unable to figure out how to do proper layering and services, so I am making the API call in the code.
+        if (SentCard is not null) // If a card has been sent to the dialog, get the id and set the endpoint to the card controller.
+        {
+            deleteId = (int)SentCard.CardId; // Gets the id of the sent card.
+            endpoint = "Card"; // Sets the endpoint to the card controller.
+            Console.WriteLine("Card is sent. id: " + deleteId); // Debug to confirm a card has been found, including the id,
+        }
+        else if (SentColumn is not null) // If a column has been sent to the dialg, get the id and set the endpoint to the column controller.
+        {
+            deleteId = (int)SentColumn.ColumnId; // Gets the id of the sent column
+            endpoint = "Column"; // Sets the endpoint to the column controller.
+            //Console.WriteLine("Column is sent. id: " + deleteId); //Debug to confirm a column has been found, including id.
+        }
+        //Console.WriteLine("deleteId after: " + deleteId); //Debug to confirm that the id has been set.
+        if (deleteId != 0 && deleteId is not null) // If an id has been set, and it is not 0, run the DELETE call.
+        {
+            HttpResponseMessage responseMessage = await _http.DeleteAsync($"{baseUrl}/{endpoint}/{deleteId}"); // calles DELETE on the selected API endpoint
+            if (responseMessage.IsSuccessStatusCode) // If the call is successfull, close the dialog.
+            {
+
+                Console.WriteLine($"{endpoint} Deleted successfully");//Debug to confirm a card/column has been deleted.
+                //MudDialog.Close(DialogResult.Ok(true)); // Close the dialog and returns true.
+            }
+            else // If the DELETE call is not successfull, do not close the dialog, and inform user of error.
+            {
+                ErrorText = "An error occured and we could not delete the item";
+                //Console.WriteLine("Card not added: " + responseMessage.StatusCode.ToString()); //Debug to confirm error happened, including statuscode.
+            }
+        }
+
+    }
+
+    private void Cancel() // Closes the dialog with cancel, and do not delete the card/column.
+    {
+        MudDialog.Cancel();
+    }
+
+}

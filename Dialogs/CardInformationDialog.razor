@@ -19,9 +19,11 @@
 				<MudSelectItem Value="@item.UserId">@item.Initials</MudSelectItem>
             }
         </MudSelect>
+        <MudText Color="Color.Error">@ErrorText</MudText>
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="Cancel">Cancel</MudButton>
+        @*<MudButton Color="Color.Warning" OnClick="Delete">Delete</MudButton>*@
         <MudButton Color="Color.Primary" OnClick="Submit">Ok</MudButton>
     </DialogActions>
 </MudDialog>
@@ -30,15 +32,18 @@
     [CascadingParameter] MudDialogInstance MudDialog { get; set; }
     [Parameter] public string StatusName { get; set; }
     [Parameter] public List<Column> Columns { get; set; }
-    [Parameter] public Card ?oldCard { get; set; }
+    [Parameter] public Card ?oldCard { get; set; } // If the user want to update an existing card, the dialog is called with the card information, else it is null.
     [Parameter] public List<User> _users { get; set; }
 
     private MudSelect<int> _userDropdown;
     private MudSelect<string> _cardDropdown;
+    private string BaseUrl = "http://10.108.130.43:5213/api"; // I have been unable to figure out how to do proper layering and services, therefore i am doing the API calls in the page.
+
+    public string ErrorText { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
-        if (oldCard is not null)
+        if (oldCard is not null) // If a Card has been sent to the dialog, map the information to a new variable, to avoid editing the original before saving.
         {
             _newCard.CardId = oldCard.CardId;
             _newCard.UserId = oldCard.UserId;
@@ -47,55 +52,78 @@
             _newCard.AssignedUser = oldCard.AssignedUser;
             _newCard.Attachment = oldCard.Attachment;
         }
-        _newCard.CardStatus = StatusName;
+        _newCard.CardStatus = StatusName; // The initial column of the card, is always sent.
 
-        //_users = await _http.GetFromJsonAsync<List<User>>("http://localhost:5213/api/User");
+        //_users = await _http.GetFromJsonAsync<List<User>>("http://10.108.130.43:5213/api/User");
     }
 
-    private Card _newCard { get; set; } = new Card();
-    //public List<User> _users { get; set; } = new();
+    private Card _newCard { get; set; } = new Card(); // A property for the editable information.
 
     async void Submit()
     {
-        Console.WriteLine("CardId: " + _newCard.CardId);
-        if (_newCard.CardId > 0)
+        ErrorText = "";
+        //Console.WriteLine("CardId: " + _newCard.CardId); // Debug information to confirm an id is set.
+        if (_newCard.CardId > 0) // If the card has an id above 0, it means it is an existing card, and will update instead of creating a new one.
         {
-            Console.WriteLine("Updating existing card");
-            HttpResponseMessage responseMessage = await _http.PutAsJsonAsync($"http://localhost:5213/api/Card/{_newCard.CardId}", _newCard);
-            if (responseMessage.IsSuccessStatusCode)
+            //Console.WriteLine("Updating existing card"); //Debug to confirm that update is running.
+            HttpResponseMessage responseMessage = await _http.PutAsJsonAsync($"{BaseUrl}/Card/{_newCard.CardId}", _newCard); // PUT to API/database.
+            if (responseMessage.IsSuccessStatusCode) // If PUT is successfull, close the app successfully
             {
 
-                Console.WriteLine("Card Updated successfully");
-                MudDialog.Close(DialogResult.Ok(_newCard));
+                //Console.WriteLine("Card Updated successfully"); //Debug to confirm update has run.
+                MudDialog.Close(DialogResult.Ok(_newCard)); // Close the dialog successfully and return the card.
             }
-            else
+            else // If PUT is not sucessfull, do not close the dialog, but inform user of error.
             {
 
-                Console.WriteLine("Card not added: " + responseMessage.StatusCode.ToString());
+                ErrorText = "Error occured, could not update Card.";
+                //Console.WriteLine("Card not added: " + responseMessage.StatusCode.ToString()); //Debug that an error happened, including the statuscode.
             }
         }
         else
         {
-            Console.WriteLine("Adding new card.");
-            HttpResponseMessage responseMessage = await _http.PostAsJsonAsync($"http://localhost:5213/api/Card", _newCard);
-            if (responseMessage.IsSuccessStatusCode)
+            //Console.WriteLine("Adding new card.");//Debug to confirm that it is adding a new card.
+            HttpResponseMessage responseMessage = await _http.PostAsJsonAsync($"{BaseUrl}/Card", _newCard); // POST card to the database.
+            if (responseMessage.IsSuccessStatusCode) // If the POST is successfull, close the dialog and return the new card.
             {
 
-                Console.WriteLine("Card added successfully");
-                MudDialog.Close(DialogResult.Ok(_newCard));
+                //Console.WriteLine("Card added successfully");//Debug to confirm that POST is successfull.
+                MudDialog.Close(DialogResult.Ok(_newCard)); // Close the dialog and return the new card.
             }
-            else
+            else // If POST is not successfull, do not close dialog, and inform user of error.
             {
 
-                Console.WriteLine("Card not added: " + responseMessage.StatusCode.ToString());
+                ErrorText = "Error Occured, Could not add new Card."; // Informs the user of an error happened
+                //Console.WriteLine("Card not added: " + responseMessage.StatusCode.ToString()); // Debug to confirm error happened, plus statuscode.
             }
         }
-        MudDialog.Close(DialogResult.Cancel());
+        //MudDialog.Close(DialogResult.Cancel());
     }
-    void Cancel()
+    //async void Delete()
+    //{
+    //    ErrorText = "";
+    //    if (_newCard.CardId > 0)
+    //    {
+    //        HttpResponseMessage responseMessage = await _http.DeleteAsync($"{BaseUrl}/Card/{_newCard.CardId}");
+    //        if (responseMessage.IsSuccessStatusCode)
+    //        {
+    //            MudDialog.Cancel();
+    //        }
+    //        else
+    //        {
+    //            ErrorText = "Error, card could not be deleted";
+    //        }
+    //    }
+    //    else
+    //    {
+
+    //        ErrorText = "Error, Card does not exist";
+    //    }
+    //}
+    void Cancel() // close the dialog with a cancel.
     {
-        Console.WriteLine("Changes should be cancelled.");
-        _newCard = oldCard;
+        //Console.WriteLine("Changes should be cancelled."); // Debug to confirm cancel is being run, and changes should not be saved.
+        _newCard = oldCard; // I have had some errors where in the code, oldCard and _newCard would form a referance connection, making it impossible to cancel edits.
         MudDialog.Close(DialogResult.Cancel());   //MudDialog.Cancel();
     }
 }

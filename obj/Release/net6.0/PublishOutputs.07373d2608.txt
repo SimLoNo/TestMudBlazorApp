@@ -1,0 +1,2 @@
+C:\Users\Administrator\Documents\GitHub\TestMudBlazorApp\bin\Release\net6.0\publish\ApiKeyFile.json
+C:\Users\Administrator\Documents\GitHub\TestMudBlazorApp\bin\Release\net6.0\publish\web.config
