@@ -71,7 +71,7 @@
             {
 
                 //Console.WriteLine("Card Updated successfully"); //Debug to confirm update has run.
-                MudDialog.Close(DialogResult.Ok(_newCard)); // Close the dialog successfully and return the card.
+                MudDialog.Close(DialogResult.Ok(await responseMessage.Content.ReadFromJsonAsync<Card>())); // Close the dialog successfully and return the card.
             }
             else // If PUT is not sucessfull, do not close the dialog, but inform user of error.
             {
@@ -86,9 +86,10 @@
             HttpResponseMessage responseMessage = await _http.PostAsJsonAsync($"{BaseUrl}/Card", _newCard); // POST card to the database.
             if (responseMessage.IsSuccessStatusCode) // If the POST is successfull, close the dialog and return the new card.
             {
+                
 
                 //Console.WriteLine("Card added successfully");//Debug to confirm that POST is successfull.
-                MudDialog.Close(DialogResult.Ok(_newCard)); // Close the dialog and return the new card.
+                MudDialog.Close(DialogResult.Ok(await responseMessage.Content.ReadFromJsonAsync<Card>())); // Close the dialog and return the new card.
             }
             else // If POST is not successfull, do not close dialog, and inform user of error.
             {

@@ -104,34 +104,34 @@
 
 	private async void OnValidSectionSubmit(EditContext context)
 	{
-		Column newColumn = new Column(newSectionModel.Name);
-		newSectionModel.Name = string.Empty;
+		Column newColumn = new Column(newSectionModel.Name); // Created the column variable to be sent to the API.
+		newSectionModel.Name = string.Empty; // Empties the variable that contains names of the columns.
 		_addSectionOpen = false;
-		HttpResponseMessage responseMessage = await _http.PostAsJsonAsync<Column>($"{_baseUrl}/Column/", newColumn);
-		if (responseMessage.IsSuccessStatusCode)
+		HttpResponseMessage responseMessage = await _http.PostAsJsonAsync<Column>($"{_baseUrl}/Column/", newColumn); // Calls POST to the API.
+		if (responseMessage.IsSuccessStatusCode) // If the POST call is successful, add the column to the frontend UI.
 		{
 
-			Console.WriteLine("Column was added successfully");
-			Column addedColumn = await responseMessage.Content.ReadFromJsonAsync<Column>();
-			//int columnIndex = _sections.FindIndex(c => c.ColumnName == newColumn.ColumnName);
-			if (addedColumn is not null)
+			//Console.WriteLine("Column was added successfully");//Debug to confirm column was added to the database.
+			Column addedColumn = await responseMessage.Content.ReadFromJsonAsync<Column>(); // Gets the returned column from the API.
+																							//int columnIndex = _sections.FindIndex(c => c.ColumnName == newColumn.ColumnName);
+			if (addedColumn is not null) // If a column has been returned from the API, add it to the _sections variable.
 			{
-				_sections.Add(addedColumn);
+				_sections.Add(addedColumn); //Add the column to the UI.
 			}
 			else
 			{
-				Console.WriteLine("addedColumn in OnValidSelectionSubmit was null");
+				//Console.WriteLine("addedColumn in OnValidSelectionSubmit was null");//Debug that an error occured.
 			}
-			//_sections[columnIndex].ColumnId = addedColumn.ColumnId;
 
-			StateHasChanged();
+
+			StateHasChanged(); // Tells the UI to update.
 		}
-		else
+		else // If POST call was not successfull, debug the error.
 		{
 
-			Console.WriteLine("Column not added: " + responseMessage.StatusCode.ToString());
+			//Console.WriteLine("Column not added: " + responseMessage.StatusCode.ToString());//Debug to confirm column was not added, including statuscode.
 		}
-		//_sections.Add(newColumn);
+
 	}
 
 	private void OpenAddNewSection()
@@ -158,18 +158,18 @@
 			try
 			{
 
-				updatedCard = (Card)newCard;
-				int taskId = _tasks.FindIndex(t => t.CardId == card.CardId);
-				_tasks[taskId] = updatedCard;
-				_dropContainer.Refresh();
+				updatedCard = (Card)newCard; //Maps the returned card to a new variable.
+				int taskId = _tasks.FindIndex(t => t.CardId == card.CardId); //Get the index of the card in the list.
+				_tasks[taskId] = updatedCard; //Updates the old card information with the new.
+				_dropContainer.Refresh();//Tells the _dropContainer to update it's UI.
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine(ex.Message);
+				//Console.WriteLine(ex.Message);//Debugs if an error happens.
 			}
 
 		}
-		_dropContainer.Refresh();
+		//_dropContainer.Refresh();
 	}
 
 
@@ -189,90 +189,98 @@
 		// If data have been returned and the dialog was not cancelled, try to add the task to the list.
 		if (newCard is not null && !result.Cancelled)
 		{
-			Card addedCard;
+			//Card addedCard;
 			try
 			{
-				addedCard = (Card)newCard;
-				_tasks.Add(addedCard);
+				Console.WriteLine(newCard.ToString());
+				Card addedCard = new Card((Card)newCard); //Maps the returned card to a new variable.
+				Console.WriteLine("---Card added---");
+				Console.WriteLine("Id: " + addedCard.CardId);
+				Console.WriteLine("title: " + addedCard.Title);
+				_tasks.Add(addedCard); //Add the new card to the list.
 				_dropContainer.Refresh(); // Updates the tasks on the UI.
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine(ex.Message);
+				//Console.WriteLine(ex.Message); //Debug error.
 			}
 
 		}
 		else
 		{
-			_dropContainer.Refresh(); // Updates the tasks on the UI.
+			_dropContainer.Refresh(); // Updates the tasks on the UI. (I don't know why I have it here as well).
 		}
 
 
 	}
 	private async void DeleteTask(Card card)
 	{
-
+		// Adds parameters to the dialog call to delete a card.
 		var parameters = new DialogParameters();
 		parameters.Add("SentColumn", null);
 		parameters.Add("SentCard", card);
 		parameters.Add("Description", $"Are you sure you want to delete card {card.Title}?");
 		parameters.Add("ConfirmText", "Delete");
+		// Calls the dialog to delete the card.
 		var dialog = DialogService.Show<ConfirmDialog>("Delete card", parameters);
 		var result = await dialog.Result;
-		if (!result.Cancelled)
+		if (!result.Cancelled) // If the dialog is not cancelled, remove the card from the list.
 		{
 			_tasks.Remove(card);
+
 			_dropContainer.Refresh();
 			StateHasChanged();
 		}
-		else
+		else // This was added as a debug, to check that I used IsCanceled correct.
 		{
-			Console.WriteLine("DeleteTask IsCanceled is: " + dialog.Result.IsCanceled);
+			//Console.WriteLine("DeleteTask IsCanceled is: " + dialog.Result.IsCanceled);// Debug, tells the value of IsCanceled.
 		}
 
 	}
 
 	private async void DeleteSection(Column section)
 	{
+		// Adds parameters to the dialog call to delete a column.
 		var parameters = new DialogParameters();
 		parameters.Add("SentColumn", section);
 		parameters.Add("SentCard", null);
 		parameters.Add("Description", $"Are you sure you want to delete column {section.ColumnName}?");
 		parameters.Add("ConfirmText", "Delete");
+		// Calls the dialog to delete the column.
 		var dialog = DialogService.Show<ConfirmDialog>("Delete Column", parameters);
 		var result = await dialog.Result;
 		if (!result.Cancelled) // If the dialog was not cancelled, Remove the column from the list.
 		{
-			Console.WriteLine("Section Deleted on server");
-			if (_sections.Count == 1)
+			//Console.WriteLine("Section Deleted on server");//Debug to confirm column was deleted from the database.
+			if (_sections.Count == 1) // If there is only 1 column left before it was deleted, clear the lists for cards and column.
 			{
 				_tasks.Clear();
 				_sections.Clear();
 			}
 			else
 			{
+				// gets the index of the previous column, to move the cards of the deleted column to.
 				int newIndex = _sections.IndexOf(section) - 1;
 				if (newIndex < 0)
 				{
 					newIndex = 0;
 				}
 
-				_sections.Remove(section);
+				_sections.Remove(section); //Remove the column from the list.
 
-				var tasks = _tasks.Where(x => x.CardStatus == section.ColumnName);
-				foreach (var item in tasks)
+				var tasks = _tasks.Where(x => x.CardStatus == section.ColumnName); //Gets a list of the cards belonging to the deleted column.
+				foreach (var item in tasks) // For every card of the deleted column, set the to the previous column.
 				{
 					item.CardStatus = _sections[newIndex].ColumnName;
-					await _http.PutAsJsonAsync<Card>($"{_baseUrl}/Card/{item.CardId}", item);
+					await _http.PutAsJsonAsync<Card>($"{_baseUrl}/Card/{item.CardId}", item); //Updates the changes to the database.
 				}
 			}
 
 
-			StateHasChanged();
+			StateHasChanged(); // Tells the UI to update.
 		}
 		
 	}
 
-	MudMessageBox AddCardMessageBox { get; set; }
 }
 
